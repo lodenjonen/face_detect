@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection</title>
+</head>
+<body>
+    <h1>Face Detection</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture Photo</button>
+    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <form id="uploadForm" method="POST">
+        <input type="hidden" name="image" id="imageData">
+        <button type="submit">Submit Photo</button>
+    </form>
+    <p id="result">Result: </p>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const uploadForm = document.getElementById('uploadForm');
+        const imageDataInput = document.getElementById('imageData');
+        const resultDisplay = document.getElementById('result');
+
+        // Access the webcam and start video streaming
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(err => console.error('Error accessing webcam: ', err));
+
+        document.getElementById('capture').addEventListener('click', () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg');
+            imageDataInput.value = imageData;
+            
+            // Submit the form
+            uploadForm.submit();
+        });
+
+        uploadForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetch('/upload', {
+                method: 'POST',
+                body: new URLSearchParams(new FormData(this))
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDisplay.textContent = 'Result: ' + data.result.join(', ');
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
